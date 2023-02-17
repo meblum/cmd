@@ -46,12 +46,12 @@ func main() {
 	greetFlagSet.StringVar(&greetType, "type", greetType, "greet type (hello|bye)")
 	greetFlagSet.StringVar(&greetName, "name", greetName, "name to print greeting for")
 
-	jsonFlagSet := flag.NewFlagSet(versionCommandName, flag.ExitOnError)
-	jsonFlagSet.BoolVar(&versionVerbose, "verbose", versionVerbose, "output version with additional information")
+	versionFlagSet := flag.NewFlagSet(versionCommandName, flag.ExitOnError)
+	versionFlagSet.BoolVar(&versionVerbose, "verbose", versionVerbose, "output version with additional information")
 
 	c := &cmd.CommandSet{}
 	c.Add("print greeting", greetFlagSet, false)
-	c.Add("print version", jsonFlagSet, false)
+	c.Add("print version", versionFlagSet, false)
 
 	currSub, _ := c.Parse(os.Args[1:], flag.ExitOnError)
 
