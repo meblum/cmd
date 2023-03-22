@@ -12,7 +12,7 @@ func TestCommandSet_Add(t *testing.T) {
 	cmd := &CmdSet{}
 	names := []string{"name", "andAnotherOne", "anotherName"}
 	for _, v := range names {
-		if c := cmd.Add("", flag.NewFlagSet(v, flag.ContinueOnError), false); cmd.commands[v] != c {
+		if c := cmd.Add("", flag.NewFlagSet(v, flag.ContinueOnError), nil, false); cmd.commands[v] != c {
 			t.Errorf("%v has not been added to commandSet", v)
 		}
 	}
@@ -31,15 +31,15 @@ func TestCommandSet_Add(t *testing.T) {
 func TestCommandSet_AddEmptyName(t *testing.T) {
 	cmd := &CmdSet{}
 	defer func() { recover() }()
-	cmd.Add("", flag.NewFlagSet("", flag.ContinueOnError), false)
+	cmd.Add("", flag.NewFlagSet("", flag.ContinueOnError), nil, false)
 	t.Errorf("expected empty name to panic")
 }
 
 func TestCommandSet_AddExistingName(t *testing.T) {
 	cmd := &CmdSet{}
 	defer func() { recover() }()
-	cmd.Add("name", flag.NewFlagSet("", flag.ContinueOnError), false)
-	cmd.Add("name", flag.NewFlagSet("", flag.ContinueOnError), false)
+	cmd.Add("name", flag.NewFlagSet("", flag.ContinueOnError), nil, false)
+	cmd.Add("name", flag.NewFlagSet("", flag.ContinueOnError), nil, false)
 	t.Errorf("expected empty name to panic")
 }
 
@@ -51,7 +51,7 @@ func TestCommandSet_Visit(t *testing.T) {
 		flag.NewFlagSet("c", flag.ContinueOnError): false,
 	}
 	for k := range sets {
-		cmd.Add("", k, false)
+		cmd.Add("", k, nil, false)
 	}
 
 	cmd.Visit(func(s *Cmd) { sets[s.FlagSet] = true })
@@ -68,11 +68,11 @@ func TestCommandSet_PrintUsage(t *testing.T) {
 	emptyCmd := &CmdSet{output: &strings.Builder{}}
 
 	emptyUsageCmd := &CmdSet{output: &strings.Builder{}}
-	emptyUsageCmd.Add("", flag.NewFlagSet("a", flag.ContinueOnError), false)
+	emptyUsageCmd.Add("", flag.NewFlagSet("a", flag.ContinueOnError), nil, false)
 
 	regularCmd := &CmdSet{output: &strings.Builder{}}
-	regularCmd.Add("does b", flag.NewFlagSet("b", flag.ContinueOnError), false)
-	regularCmd.Add("does a", flag.NewFlagSet("a", flag.ContinueOnError), false)
+	regularCmd.Add("does b", flag.NewFlagSet("b", flag.ContinueOnError), nil, false)
+	regularCmd.Add("does a", flag.NewFlagSet("a", flag.ContinueOnError), nil, false)
 
 	tests := []struct {
 		name     string
@@ -112,7 +112,7 @@ func TestCommandSet_Parse(t *testing.T) {
 	var av string
 	af := flag.NewFlagSet("a", flag.ContinueOnError)
 	af.StringVar(&av, "av", "", "")
-	a := cmd.Add("", af, true)
+	a := cmd.Add("", af, nil, true)
 
 	if c, err := cmd.Parse([]string{"a", "-av=aVal"}, flag.ContinueOnError); c != a || err != nil {
 		t.Errorf("expected %v, got %v", a, c)
@@ -125,7 +125,7 @@ func TestCommandSet_Parse(t *testing.T) {
 
 func TestCommandSet_ParseError(t *testing.T) {
 	cmd := &CmdSet{}
-	cmd.Add("", flag.NewFlagSet("a", flag.ContinueOnError), false)
+	cmd.Add("", flag.NewFlagSet("a", flag.ContinueOnError), nil, false)
 
 	if os.Getenv("EXIT") == "EMPTY" {
 		cmd.Parse([]string{}, flag.ExitOnError)

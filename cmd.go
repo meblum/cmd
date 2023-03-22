@@ -10,11 +10,20 @@ import (
 	"strings"
 )
 
+type Handler interface {
+	HandleCmd(*Cmd) error
+}
+
 // A Cmd is a single subcommand with a set of flags.
 type Cmd struct {
 	Info      string
 	FlagSet   *flag.FlagSet
 	AllowArgs bool
+	Handler   Handler
+}
+
+func (c *Cmd) Handle() error {
+	return c.Handler.HandleCmd(c)
 }
 
 // A CmdSet contains a set of subcommands.
@@ -32,11 +41,12 @@ type CmdSet struct {
 // Add adds a subcommand with specified usage string and flag set.
 // The command name is derived from flags.Name.
 // Use the allowArgs argument to specify wheather additional args should be allowed.
+// For easy mapping from command to the relevant handler, supply handler which will be added to the Cmd returned from Parse().
 // Returns the addded command.
 //
 // Command names must be unique within a CommandSet.
 // An attempt to define a command whose name is an emty string or whose name is already in use will cause a panic.
-func (c *CmdSet) Add(usage string, flags *flag.FlagSet, allowArgs bool) *Cmd {
+func (c *CmdSet) Add(usage string, flags *flag.FlagSet, handler Handler, allowArgs bool) *Cmd {
 	if c.commands == nil {
 		c.commands = make(map[string]*Cmd)
 	}
