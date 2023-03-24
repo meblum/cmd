@@ -129,7 +129,12 @@ func (c *CmdSet) getSubcommand(arguments []string) (*Cmd, error) {
 // Returns the supplied Subcommand if a match was found.
 //
 // Must be called after all subcommands are defined and before flags are accessed by the program.
+// If arguments is nil, will default to `os.Args[1:]`.
 func (c *CmdSet) Parse(arguments []string, errorHandling flag.ErrorHandling) (*Cmd, error) {
+	if arguments == nil {
+		arguments = os.Args[1:]
+	}
+
 	subcommand, err := c.getSubcommand(arguments)
 
 	if err != nil {
