@@ -10,8 +10,9 @@ import (
 	"strings"
 )
 
+// Handler defines the interface of a Cmd handler
 type Handler interface {
-	HandleCmd(*Cmd) error
+	Handle(*Cmd) error
 }
 
 // A Cmd is a single subcommand with a set of flags.
@@ -20,10 +21,6 @@ type Cmd struct {
 	FlagSet   *flag.FlagSet
 	AllowArgs bool
 	Handler   Handler
-}
-
-func (c *Cmd) Handle() error {
-	return c.Handler.HandleCmd(c)
 }
 
 // A CmdSet contains a set of subcommands.
@@ -41,7 +38,7 @@ type CmdSet struct {
 // Add adds a subcommand with specified usage string and flag set.
 // The command name is derived from flags.Name.
 // Use the allowArgs argument to specify wheather additional args should be allowed.
-// For easy mapping from command to the relevant handler, supply handler which will be added to the Cmd returned from Parse().
+// For easy mapping from command to the relevant handler, supply a handler which will be added to the Cmd returned from Parse().
 // Returns the addded command.
 //
 // Command names must be unique within a CommandSet.
@@ -155,6 +152,16 @@ func (c *CmdSet) Parse(arguments []string, errorHandling flag.ErrorHandling) (*C
 	}
 
 	return subcommand, nil
+}
+
+// Handle is equivilant to Parse followed by calling the handler of the returned Cmd.
+// If Parse fails, the reulting error is returned, otherwise the result from handle is returned.
+func (c *CmdSet) Handle(arguments []string, errorHandling flag.ErrorHandling) error {
+	cmd, err := c.Parse(arguments, errorHandling)
+	if err != nil {
+		return err
+	}
+	return cmd.Handler.Handle(cmd)
 }
 
 func handleError(err error, errorHandling flag.ErrorHandling) {
