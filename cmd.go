@@ -154,9 +154,9 @@ func (c *CmdSet) Parse(arguments []string, errorHandling flag.ErrorHandling) (*C
 	return subcommand, nil
 }
 
-// Handle is equivilant to Parse followed by calling the handler of the returned Cmd.
+// HandleCmd is equivilant to Parse followed by calling the handler of the returned Cmd.
 // If Parse fails, the reulting error is returned, otherwise the result from handle is returned.
-func (c *CmdSet) Handle(arguments []string, errorHandling flag.ErrorHandling) error {
+func (c *CmdSet) HandleCmd(arguments []string, errorHandling flag.ErrorHandling) error {
 	cmd, err := c.Parse(arguments, errorHandling)
 	if err != nil {
 		return err
