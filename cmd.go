@@ -57,7 +57,7 @@ func (c *CmdSet) Add(usage string, flags *flag.FlagSet, handler Handler, allowAr
 	if cmdNameLen > c.cmdNameLength {
 		c.cmdNameLength = cmdNameLen
 	}
-	cmd := &Cmd{Info: usage, AllowArgs: allowArgs, FlagSet: flags}
+	cmd := &Cmd{Info: usage, AllowArgs: allowArgs, FlagSet: flags, Handler: handler}
 	c.commands[cmdName] = cmd
 	return cmd
 }
