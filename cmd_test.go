@@ -8,16 +8,44 @@ import (
 	"testing"
 )
 
-func TestCommandSet_Add(t *testing.T) {
+type handlerFunc func(*Cmd) error
+
+func (h handlerFunc) Handle(c *Cmd) error { return h(c) }
+
+func TestCmdSet_Add(t *testing.T) {
 	cmd := &CmdSet{}
-	names := []string{"name", "andAnotherOne", "anotherName"}
-	for _, v := range names {
-		if c := cmd.Add("", flag.NewFlagSet(v, flag.ContinueOnError), nil, false); cmd.commands[v] != c {
-			t.Errorf("%v has not been added to commandSet", v)
+
+	cmds := []Cmd{
+		{
+			"info for one",
+			flag.NewFlagSet("one", flag.ContinueOnError),
+			false,
+			handlerFunc(func(c *Cmd) error { return nil }),
+		},
+		{
+			"info for two",
+			flag.NewFlagSet("two", flag.ContinueOnError),
+			true,
+			handlerFunc(func(c *Cmd) error { return nil }),
+		},
+		{
+			"info for three",
+			flag.NewFlagSet("three", flag.ContinueOnError),
+			false,
+			handlerFunc(func(c *Cmd) error { return nil }),
+		},
+	}
+	for _, v := range cmds {
+		c := cmd.Add(v.Info, v.FlagSet, v.Handler, v.AllowArgs)
+		if cmd.commands[v.FlagSet.Name()] != c {
+			t.Errorf("%v has not been added to commandSet", v.FlagSet.Name())
+		}
+		if c.AllowArgs != v.AllowArgs || c.FlagSet != v.FlagSet || c.Handler == nil || c.Info != v.Info {
+			t.Errorf("added %v but got %v", v, *c)
 		}
 	}
 
-	expectedLen := len(names[1])
+	expectedLen := len(cmds[2].FlagSet.Name())
 	if cmd.cmdNameLength != expectedLen {
 		t.Errorf("expected cmdNameLength length to be %v, got %v", expectedLen, cmd.cmdNameLength)
 	}
@@ -28,14 +56,14 @@ func TestCommandSet_Add(t *testing.T) {
 
 }
 
-func TestCommandSet_AddEmptyName(t *testing.T) {
+func TestCmdSet_AddEmptyName(t *testing.T) {
 	cmd := &CmdSet{}
 	defer func() { recover() }()
 	cmd.Add("", flag.NewFlagSet("", flag.ContinueOnError), nil, false)
 	t.Errorf("expected empty name to panic")
 }
 
-func TestCommandSet_AddExistingName(t *testing.T) {
+func TestCmdSet_AddExistingName(t *testing.T) {
 	cmd := &CmdSet{}
 	defer func() { recover() }()
 	cmd.Add("name", flag.NewFlagSet("", flag.ContinueOnError), nil, false)
@@ -43,7 +71,7 @@ func TestCommandSet_AddExistingName(t *testing.T) {
 	t.Errorf("expected empty name to panic")
 }
 
-func TestCommandSet_Visit(t *testing.T) {
+func TestCmdSet_Visit(t *testing.T) {
 	cmd := &CmdSet{}
 	sets := map[*flag.FlagSet]bool{
 		flag.NewFlagSet("a", flag.ContinueOnError): false,
@@ -63,7 +91,7 @@ func TestCommandSet_Visit(t *testing.T) {
 
 }
 
-func TestCommandSet_PrintUsage(t *testing.T) {
+func TestCmdSet_PrintUsage(t *testing.T) {
 
 	emptyCmd := &CmdSet{output: &strings.Builder{}}
 
@@ -106,7 +134,7 @@ func TestCommandSet_PrintUsage(t *testing.T) {
 	}
 }
 
-func TestCommandSet_Parse(t *testing.T) {
+func TestCmdSet_Parse(t *testing.T) {
 	cmd := &CmdSet{}
 
 	var av string
@@ -123,7 +151,7 @@ func TestCommandSet_Parse(t *testing.T) {
 
 }
 
-func TestCommandSet_ParseError(t *testing.T) {
+func TestCmdSet_ParseError(t *testing.T) {
 	cmd := &CmdSet{}
 	cmd.Add("", flag.NewFlagSet("a", flag.ContinueOnError), nil, false)
 
@@ -158,7 +186,7 @@ func TestCommandSet_ParseError(t *testing.T) {
 				t.Errorf("expected panic, got %v", err)
 			}()
 
-			c := exec.Command(os.Args[0], "-test.run=TestCommandSet_ParseError")
+			c := exec.Command(os.Args[0], "-test.run=TestCmdSet_ParseError")
 			c.Env = append(os.Environ(), "EXIT="+tt.execFlag)
 			err := c.Run()
 			if e, ok := err.(*exec.ExitError); !ok || e.ExitCode() != 2 {
@@ -172,7 +200,7 @@ func TestCommandSet_ParseError(t *testing.T) {
 	}
 }
 
-func TestCommandSet_ParseHelp(t *testing.T) {
+func TestCmdSet_ParseHelp(t *testing.T) {
 	cmd := &CmdSet{}
 
 	if os.Getenv("EXIT") == "HELP" {
@@ -180,7 +208,7 @@ func TestCommandSet_ParseHelp(t *testing.T) {
 		return
 	}
 
-	c := exec.Command(os.Args[0], "-test.run=TestCommandSet_ParseHelp")
+	c := exec.Command(os.Args[0], "-test.run=TestCmdSet_ParseHelp")
 	c.Env = append(os.Environ(), "EXIT=HELP")
 
 	if err := c.Run(); err != nil {
