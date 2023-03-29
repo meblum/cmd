@@ -23,64 +23,67 @@ go get -u github.com/meblum/cmd
 ## Example usage
 
 ```go
-package main
-
 import (
 	"flag"
 	"fmt"
-	"os"
 
-	"github.com/meblum/plane/cmd"
+	"github.com/meblum/cmd"
 )
 
 func main() {
-
-	greetCommandName := "greet"
-	greetType := "hello"
-	greetName := "Anonymous"
-
-	versionCommandName := "version"
-	versionVerbose := false
-
-	greetFlagSet := flag.NewFlagSet(greetCommandName, flag.ExitOnError)
-	greetFlagSet.StringVar(&greetType, "type", greetType, "greet type (hello|bye)")
-	greetFlagSet.StringVar(&greetName, "name", greetName, "name to print greeting for")
-
-	versionFlagSet := flag.NewFlagSet(versionCommandName, flag.ExitOnError)
-	versionFlagSet.BoolVar(&versionVerbose, "verbose", versionVerbose, "output version with additional information")
-
-	c := &cmd.CommandSet{}
-	c.Add("print greeting", greetFlagSet, false)
-	c.Add("print version", versionFlagSet, false)
-
-	currSub, _ := c.Parse(os.Args[1:], flag.ExitOnError)
-
-	switch currSub.FlagSet.Name() {
-	case greetCommandName:
-		handleGreet(greetType, greetName)
-	case versionCommandName:
-		handleVersion("1.0.0", versionVerbose)
+	greeter := greetHandler{
+		greetType: "hello",
+		greetName: "Anonymous",
 	}
+
+	greetFlagSet := flag.NewFlagSet("greet", flag.ExitOnError)
+	greetFlagSet.StringVar(&greeter.greetType, "type", greeter.greetType, "greet type (hello|bye)")
+	greetFlagSet.StringVar(&greeter.greetName, "name", greeter.greetName, "name to print greeting for")
+
+	version := versionHandler{
+		version: "1.0.0",
+		verbose: false,
+	}
+
+	versionFlagSet := flag.NewFlagSet("version", flag.ExitOnError)
+	versionFlagSet.BoolVar(&version.verbose, "verbose", version.verbose, "output version with additional information")
+
+	c := &cmd.CmdSet{}
+	c.Add("print greeting", greetFlagSet, greeter, false)
+	c.Add("print version", versionFlagSet, version, false)
+	c.HandleCmd(nil, flag.ExitOnError)
 }
 
-func handleGreet(greetType, name string) {
-	switch greetType {
+type greetHandler struct {
+	greetType string
+	greetName string
+}
+
+func (g greetHandler) Handle(c *cmd.Cmd) error {
+	switch g.greetType {
 	case "hello":
-		fmt.Printf("Hello, %v! Nice to meet you :)", name)
+		fmt.Printf("Hello, %v! Nice to meet you :)", g.greetName)
 	case "bye":
-		fmt.Printf("Hello, %v! Nice to meet you :)", name)
+		fmt.Printf("Hello, %v! Nice to meet you :)", g.greetName)
 	default:
-		fmt.Print("invalid greet type, please use 'hello' or 'bye'")
+		return fmt.Errorf("invalid greet type %v, valid options are 'hello' or 'bye'", g.greetType)
 	}
+	return nil
 }
 
-func handleVersion(version string, verbose bool) {
-	if verbose {
-		fmt.Printf("You are using Greeter version %v", version)
-		return
-	}
-	fmt.Print(version)
+type versionHandler struct {
+	version string
+	verbose bool
 }
+
+func (g versionHandler) Handle(c *cmd.Cmd) error {
+	if g.verbose {
+		fmt.Printf("You are using Greeter version %v", g.version)
+	}
+	fmt.Print(g.version)
+	return nil
+}
+
 
 ```
 
